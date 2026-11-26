@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=TwinBrick it
+GenericName=Places into bricks
+Comment=A place on earth as a brick model: pick a point on the map, span a square, hexagon, triangle or circle, and build its digital twin in bricks
+Exec=twinbrick-it
+Icon=twinbrick-it
+Terminal=false
+Categories=Graphics;3DGraphics;
+Keywords=brick;map;GPS;digital twin;terrain;buildings;LoD2;OpenStreetMap;hexagon;tile;diorama;
+StartupNotify=true
+StartupWMClass=TwinBrick it
+Actions=results;
+
+[Desktop Action results]
+Name=Open the results folder
+Exec=twinbrick-it results

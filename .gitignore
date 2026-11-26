@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+# results and caches never belong here (they live in ~/legolize_results and ~/.cache/twinbrick-it)
+results/
+*.ply
+*.npz

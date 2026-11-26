@@ -1,0 +1,9 @@
+# TwinBrick it: the site builder and its window. The brick engine is Legolize it (github.com/CalzitPLA/Legolize-it):
+# install.sh finds or fetches it and installs its requirements too. Lower bounds = the versions it was developed and
+# tested with (Python 3.13, 2026-11).
+numpy>=2.2
+scipy>=1.15
+trimesh>=4.11
+pillow>=11.1
+PyQt5>=5.15
+pytest>=8.3
