@@ -180,7 +180,7 @@ Every `site.json` lists the attributions of the data it was made from. Please ke
 ## Tests
 
 ```bash
-python3 -m pytest tests -q        # 40 tests, ~5 s, offline: synthetic OSM, flat ground, a stand-in for ssh, the window
+python3 -m pytest tests -q        # 41 tests, ~5 s, offline: synthetic OSM, flat ground, a stand-in for ssh, the window
 ```
 
 ## Limits
@@ -189,7 +189,9 @@ python3 -m pytest tests -q        # 40 tests, ~5 s, offline: synthetic OSM, flat
   below it; trees as lollipops are the one exception).
 - Outside NRW, buildings are only as good as OpenStreetMap's: without height or levels, a type's typical height is
   used (houses under 250 m² get a gabled roof).
-- The open sea is not coloured (coastlines are not turned into water areas); lakes and rivers are.
+- The sea is found by a rule, not from coastline polygons: when OpenStreetMap has a coastline in the area, studs at
+  sea level (0.5 m or lower) that no land use covers become sea, its surface at sea level (the elevation tiles carry
+  the sea floor). Land below sea level without mapped land use next to a coast would be taken for sea.
 - The Terrain Tiles are about 30 m outside the US: hills come out smooth.
 - The public Overpass servers (OpenStreetMap) are often busy: a site's query can take minutes of retries across the
   mirrors (the one that answered last is tried first). Each answer is cached, so building the site again, at another

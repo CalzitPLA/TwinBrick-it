@@ -50,6 +50,7 @@ def site_query(s: float, w: float, n: float, e: float, buildings: bool) -> str:
         f'nwr["amenity"~"^(parking|grave_yard|marketplace)$"]{b};',
         f'way["place"="square"]{b};', f'way["area:highway"]{b};',
         f'way["man_made"~"^(bridge|pier|breakwater)$"]{b};',
+        f'way["natural"="coastline"]{b};',
     ]
     if buildings:
         parts += [f'way["building"]{b};', f'relation["building"]{b};', f'way["building:part"]{b};',

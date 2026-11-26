@@ -127,3 +127,31 @@ def test_cli_offline_with_bricks(tmp_path, capsys):
     b = out["tiles"][0]["bricks"]
     assert b["bricks"] > 0 and b["stable"]
     assert (tmp_path / "bricks" / "result.json").exists()
+
+
+def test_the_sea_near_a_coastline(world, tmp_path):
+    """With a coastline in the area, low studs without land use become the sea at sea level - not a pit down to the
+    sea floor the elevation tiles carry; mapped land stays land."""
+    from twinbrick import osm, sources
+    from conftest import offset
+    world.append(osm.Feature("way/99", {"natural": "coastline"}, "line",
+                             line=np.array([offset(-70, 70), offset(-70, -70)])))
+
+    class Coast(sources.Terrain):                    # land rising to the north, the sea floor falling to the south
+        name = "coast"
+
+        def __init__(self, n0):
+            self.n0 = n0
+
+        def height(self, e, n):
+            return (np.asarray(n, float) - self.n0) / 4.0
+    site = Site(spec(trees="none", buildings="none"), say=lambda _t: None)
+    site.fetch()
+    site.terrain = Coast(site.north - 20.0)
+    t = site.build(tmp_path)[0]
+    assert site.coastal and t.counts.get("sea_studs", 0) > 100
+    sea = t.water & ~t.covered
+    seaR = np.repeat(np.repeat(sea, site.sub, 0), site.sub, 1)
+    assert t.ground[seaR].min() > -2 * site.plate_m                       # the surface, not the sea floor (-20 m)
+    forest = t.covered & (t.stud_class == CI["forest"])
+    assert forest.any() and not (forest & t.water).any()                  # mapped land stays land

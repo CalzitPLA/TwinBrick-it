@@ -46,6 +46,11 @@ Read `README.md` before exploring the code.
   smaller than 3/4 stud (at the tile's edge) are left out instead of shrunk. Two crown-top plates stay unsupported -
   Legolize it's greedy layout.
 - Bridges in 2.5D stand on the ground: on flat ground they are flush with the banks (not lowered with the water).
+- The sea (2026-11-26): the Terrain Tiles carry the sea floor, so a coast came out as deep pits in the ground colour.
+  With a `natural=coastline` in the area, studs <= 0.5 m without any mapped land use are sea at sea level (Warnemünde:
+  180 sea studs, beach and mole kept). Two traps the test found: water below sea level next to the sea (the bank
+  rule pulled the sea down to it) and a road running out into the sea - the sea's level is now fixed, not taken from
+  its neighbours.
 - Worldwide path checked on Heidelberg (Terrain Tiles z15, OSM buildings: 482, gabled roofs from the distance to the
   outline), 972 parts at 1:1000.
 

@@ -352,6 +352,7 @@ class Site:
         if tmode == "auto":
             tmode = "osm"
         self.tree_mode = tmode
+        self.coastal = any(f.kind == "line" and f.get("natural") == "coastline" for f in self.features)
         self.tree_style = s.tree_style if s.tree_style != "auto" else \
             ("lollipop" if self.layout.stud <= 4.0 else "canopy")
         self.source_names["trees"] = {"ndom": "NRW nDOM50", "osm": "OpenStreetMap (woods, single trees)",
@@ -479,6 +480,7 @@ class Site:
     def _classes(self, t: Tile):
         S, ni, nj = self.sub, *t.studs.shape
         img, d, xy, _ = self._canvas(t, stud=False, fill=CI["ground"])
+        cimg, cd, _, _ = self._canvas(t, stud=False, fill=0)              # where any land use is mapped
         drawn = 0
         if self.spec.landcover:
             for cls in AREA_CLASSES:
@@ -488,11 +490,13 @@ class Site:
                     for ring in outer:
                         if len(ring) >= 3:
                             d.polygon(xy(ring), fill=CI[cls])
+                            cd.polygon(xy(ring), fill=1)
                     for ring in inner:
                         if len(ring) >= 3:
                             d.polygon(xy(ring), fill=CI["ground"])
                     drawn += 1
         cls_r = np.asarray(img).T
+        t.covered = np.asarray(cimg, bool).T.reshape(ni, S, nj, S).mean(axis=(1, 3)) >= 0.5
         # the class covering most of each stud (water counts a little more: it is flat and says "river")
         weights = {"water": 1.25, "paved": 1.1}
         best = np.zeros((ni, nj))
@@ -536,12 +540,28 @@ class Site:
         t.counts.update(areas=drawn, lines=lines)
 
     def _water(self, t: Tile):
+        """Water a plate below its banks. Near a coastline, studs at sea level that no land use covers are the sea:
+        its surface at sea level (the elevation tiles carry the sea floor), not a pit in the ground colour."""
         S = self.sub
         ni, nj = t.studs.shape
         water = (t.stud_class == CI["water"]) & t.studs & ~t.bridge_studs
+        sea = np.zeros_like(water)
+        if self.coastal:
+            mean = t.terrain.reshape(ni, S, nj, S).mean(axis=(1, 3))
+            open_ = (t.line_class == 255) | (t.line_class == CI["water"])      # rivers run out into it
+            sea = t.studs & ~t.covered & open_ & ~t.bridge_studs & (mean <= 0.5)
+            if sea.any():
+                t.stud_class[sea] = CI["water"]
+                water |= sea
+                t.counts["sea_studs"] = int(sea.sum())
+            # by the sea no water starts below sea level (the tiles' sea floor and lake beds); the rule below still
+            # keeps every water a plate under its lowest bank (a polder's canals)
+            wr0 = np.repeat(np.repeat(water, S, 0), S, 1)
+            t.terrain = np.where(wr0, np.maximum(t.terrain, 0.0), t.terrain)
         gmin = t.terrain.reshape(ni, S, nj, S).min(axis=(1, 3))
         level = ndi.minimum_filter(np.where(t.studs, gmin, np.inf), size=3, mode="nearest")
         level = level - self.spec.water_drop * self.plate_m
+        level[sea] = -self.spec.water_drop * self.plate_m                # the sea: at sea level, whatever is around
         g = t.terrain.copy()
         wr = np.repeat(np.repeat(water, S, 0), S, 1)
         lr = np.repeat(np.repeat(level, S, 0), S, 1)
