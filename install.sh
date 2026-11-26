@@ -180,6 +180,7 @@ cat > "$BIN/twinbrick-it" <<LAUNCHER
 #   twinbrick-it [LAT,LON]                                   the window: a map, the shape, the scale, Build
 #   twinbrick-it cli LAT,LON --shape hexagon --size 150 --scale 750 --bricks detailed   the command line (cli --help)
 #   twinbrick-it server list|add HOST [PATH]|check HOST|sync HOST   build on servers over ssh (cli ... --server HOST)
+#   twinbrick-it report [DIR ...] [--open]                   the results as one HTML page, with 3D views of the bricks
 #   twinbrick-it check                                       check this installation
 #   twinbrick-it uninstall [--purge]                         remove it (--purge: the data cache, the server list)
 ROOT="$ROOT"
@@ -192,10 +193,11 @@ export RESOURCE_NAME=twinbrick-it     # the window's WM_CLASS instance = the des
 case "\${1:-}" in
   cli) shift; exec "\$PY" -m twinbrick "\$@" ;;
   server) shift; exec "\$PY" -m twinbrick.remote "\$@" ;;
+  report) shift; exec "\$PY" -m twinbrick.report "\$@" ;;
   check) exec "\$ROOT/install.sh" --check --venv "\$VENV" ;;
   uninstall) shift; exec "\$ROOT/install.sh" --uninstall --venv "\$VENV" "\$@" ;;
   results) mkdir -p "\$HOME/legolize_results"; exec xdg-open "\$HOME/legolize_results" ;;
-  -h|--help) sed -n '3,7p' "\$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  -h|--help) sed -n '3,8p' "\$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
 esac
 exec "\$PY" -m twinbrick_gui "\$@"
 LAUNCHER

@@ -126,6 +126,20 @@ roof=dark_red,road=black` (any class: ground field forest sand rock paved rail w
 tree2 trunk base), `--osm-colours` (roof:colour and building:colour from OSM), `--min-line 0.35` (roads narrower than
 this share of a stud are left out), `--engine-args "--cheapest --order de"` (anything for Legolize it), `--offline`.
 
+## The results page
+
+```bash
+twinbrick-it report --open                    # every site in ~/legolize_results -> twinbrick_results.html
+twinbrick-it report ~/legolize_results/burg_altena_hexagon --out altena.html
+```
+
+One HTML file that needs nothing else (pictures embedded, three.js inlined, it works offline): per site an
+interactive 3D view of the bricks - slopes as wedges, round 1x1 bricks, studs where nothing covers them, a slider and
+*build up* to watch it grow layer by layer -, the numbers (parts by kind, size, whether it holds together), the
+colours with their counts, the plan, Legolize it's picture and the command that makes the site again; tiled sites show
+all tiles in place. In the window: *File > Results page* (Ctrl+R). three.js r128 is MIT-licensed
+(`twinbrick/vendor/three_LICENSE`).
+
 ## Servers (ssh)
 
 Large sites can be built on another machine: the whole build - downloads, mesh and bricks - runs there, the results
@@ -180,7 +194,7 @@ Every `site.json` lists the attributions of the data it was made from. Please ke
 ## Tests
 
 ```bash
-python3 -m pytest tests -q        # 41 tests, ~5 s, offline: synthetic OSM, flat ground, a stand-in for ssh, the window
+python3 -m pytest tests -q        # 42 tests, ~5 s, offline: synthetic OSM, flat ground, a stand-in for ssh, the window
 ```
 
 ## Limits

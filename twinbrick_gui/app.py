@@ -329,7 +329,8 @@ class MainWindow(QMainWindow):
         menu = self.menuBar()
         m = menu.addMenu("&File")
         for text, key, fn in (("Build", "F5", self.build), ("Open in Legolize it", "Ctrl+L", self.open_legolize),
-                              ("Results folder", "Ctrl+O", self.open_folder), ("Quit", "Ctrl+Q", self.close)):
+                              ("Results folder", "Ctrl+O", self.open_folder),
+                              ("Results page (all sites)", "Ctrl+R", self.results_page), ("Quit", "Ctrl+Q", self.close)):
             a = QAction(text, self, shortcut=QKeySequence(key), triggered=fn)
             m.addAction(a)
         h = menu.addMenu("&Help")
@@ -519,6 +520,24 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Legolize it opens the site ...", 5000)
         except (ImportError, OSError) as ex:
             QMessageBox.warning(self, "TwinBrick it", str(ex))
+
+    def results_page(self):
+        """Every site in the results folder as one HTML page (twinbrick.report), opened in the browser."""
+        from twinbrick import report
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            sites = [report.collect(f) for f in report.find_sites([RESULTS])]
+            if not sites:
+                QMessageBox.information(self, "TwinBrick it", f"no sites in {RESULTS} yet - Build one first")
+                return
+            out = report.write(sites, RESULTS / "twinbrick_results.html")
+        except Exception as ex:  # noqa: BLE001 - shown to the user
+            QMessageBox.warning(self, "TwinBrick it", f"the results page: {ex}")
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(out)))
+        self.statusBar().showMessage(f"results page: {out}", 8000)
 
     def open_folder(self):
         if self.result:
