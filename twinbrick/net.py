@@ -20,7 +20,8 @@ CACHE = Path(os.environ.get("TWINBRICK_CACHE", Path.home() / ".cache" / "twinbri
 AGENT = "legolize-it-geo/0.1"            # generic: nothing about the user
 OVERPASS = ["https://overpass-api.de/api/interpreter",
             "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-            "https://overpass.private.coffee/api/interpreter"]
+            "https://overpass.private.coffee/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter"]
 
 say: Callable[[str], None] = print
 
@@ -74,17 +75,29 @@ def fetch_json(url: str, dest: Path, max_age_days: Optional[float] = None) -> di
     return json.loads(fetch(url, dest).read_text())
 
 
-def overpass(query: str, timeout: float = 180) -> dict:
-    """The answer of an Overpass query (JSON), cached by the query's hash; mirrors are tried in turn."""
+def _mirrors():
+    """The Overpass servers, the one that answered last first (busy servers come and go: 2026-11, the main one was
+    often "at capacity" while a mirror answered in seconds)."""
+    try:
+        last = (CACHE / "overpass" / "last_good.txt").read_text().strip()
+    except OSError:
+        last = ""
+    return sorted(OVERPASS, key=lambda u: u != last)
+
+
+def overpass(query: str, timeout: float = 100, rounds: int = 3) -> dict:
+    """The answer of an Overpass query (JSON), cached by the query's hash; the servers are tried in turn, a few rounds
+    with growing pauses."""
     key = CACHE / "overpass" / (hashlib.sha1(query.encode()).hexdigest() + ".json")
     if key.exists():
         return json.loads(key.read_text())
     if offline():
         raise Offline("offline and the OpenStreetMap query is not cached")
     body = urllib.parse.urlencode({"data": query}).encode()
-    last, wait = None, 3.0
-    for n in range(2 * len(OVERPASS)):
-        url = OVERPASS[n % len(OVERPASS)]
+    last, wait = None, 2.0
+    mirrors = _mirrors()
+    for n in range(rounds * len(mirrors)):
+        url = mirrors[n % len(mirrors)]
         try:
             req = urllib.request.Request(url, data=body, headers={"User-Agent": AGENT})
             with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -95,10 +108,12 @@ def overpass(query: str, timeout: float = 180) -> dict:
                 raise RuntimeError(d["remark"])
             key.parent.mkdir(parents=True, exist_ok=True)
             key.write_text(json.dumps(d))
+            (key.parent / "last_good.txt").write_text(url)
             return d
-        except Exception as ex:  # noqa: BLE001 - busy servers answer 429/504 or time out: next mirror
+        except Exception as ex:  # noqa: BLE001 - busy servers answer 429/502/504 or time out: the next one
             last = ex
-            say(f"  OpenStreetMap server {urllib.parse.urlparse(url).netloc}: {ex} - trying again")
-            time.sleep(wait)
-            wait = min(wait * 1.6, 30)
-    raise RuntimeError(f"OpenStreetMap (Overpass) failed: {last}")
+            say(f"  OpenStreetMap server {urllib.parse.urlparse(url).netloc}: {ex} - trying another")
+            if (n + 1) % len(mirrors) == 0:                   # a whole round failed: wait before the next
+                time.sleep(wait)
+                wait = min(wait * 3, 60)
+    raise RuntimeError(f"OpenStreetMap (Overpass) failed on every server: {last}")

@@ -58,7 +58,8 @@ bricks).*
 town of Altena: the river Lenne in blue, roads in grey, houses with red roofs, woods"></p>
 
 *Seven hexagons (`--ring 1`) over Altena and the Lenne valley at 1:1000 - each tile a model of its own, the seams
-stud for stud.*
+stud for stud. Outside NRW the same works from OpenStreetMap and the worldwide elevation tiles (tested on Heidelberg's
+old town: 482 buildings with gabled roofs from their outlines).*
 
 ## Install
 
@@ -86,6 +87,10 @@ stay.
 ## Use
 
 **The window:** `twinbrick-it [LAT,LON]`, or *TwinBrick it* in the applications menu.
+
+<p align="center"><img src="docs/images/window.png" width="860" alt="The TwinBrick it window: settings on the left (place,
+hexagon of 85 m, along the buildings, one ring of neighbours, scale 1:500 - 1 stud = 4 m), on the right the map of
+Altena with seven numbered hexagonal tiles drawn as studs around the castle, the log below"></p>
 
 - the map (OpenStreetMap): **click** sets the centre, **Shift+click** spans the shape to that corner, drag pans, the
   wheel zooms; the tiles are drawn as they will be built - their outline and their studs;
@@ -175,7 +180,7 @@ Every `site.json` lists the attributions of the data it was made from. Please ke
 ## Tests
 
 ```bash
-python3 -m pytest tests -q        # ~5 s, offline: synthetic OSM, flat ground, a stand-in for ssh, the window offscreen
+python3 -m pytest tests -q        # 40 tests, ~5 s, offline: synthetic OSM, flat ground, a stand-in for ssh, the window
 ```
 
 ## Limits
@@ -186,6 +191,9 @@ python3 -m pytest tests -q        # ~5 s, offline: synthetic OSM, flat ground, a
   used (houses under 250 m² get a gabled roof).
 - The open sea is not coloured (coastlines are not turned into water areas); lakes and rivers are.
 - The Terrain Tiles are about 30 m outside the US: hills come out smooth.
+- The public Overpass servers (OpenStreetMap) are often busy: a site's query can take minutes of retries across the
+  mirrors (the one that answered last is tried first). Each answer is cached, so building the site again, at another
+  scale or with other colours, needs no download.
 - A tile's trees and crowns stay inside it; the neighbour's trees are its own.
 
 ## Licence
